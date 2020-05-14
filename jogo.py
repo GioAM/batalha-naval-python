@@ -1,7 +1,7 @@
 from models import *
 
 jogador1 = Jogador(True)
-jogador2 = Jogador(False)
+jogador2 = Jogador(False, "ip_do_jogador")
 
 
 jogador1.qual_o_nome()

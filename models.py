@@ -1,15 +1,14 @@
 import socket, os
 from random import choice, random
 
-host = '192.168.56.1'
-port = 5555
 tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 class Jogador:
-    def __init__(self, is_host):
+    def __init__(self, is_host, host=""):
         self.mapa = Mapa()
         self.ganhou = False
         self.is_host = is_host
+        port = 5555
 
         if is_host:
             print("Mapa do Jogador")
@@ -37,8 +36,8 @@ class Jogador:
             x = 0
             y = 0
             self.mapa.mostrar(self)
-            x = int(input('X:'))
-            y = int(input('Y:'))
+            x = int(input('Linha:'))
+            y = int(input('Coluna:'))
             if x <= 0 or x > 10 or y <= 0 or y > 10:
                 print("Números não aceitos, perdeu a vez")
             else:
@@ -60,10 +59,10 @@ class Jogador:
             x = 0
             y = 0
             self.mapa.mostrar(self)
-            tcp.send(str.encode('write-X:'))
+            tcp.send(str.encode('write-Linha:'))
             mensagem = tcp.recv(1024).decode("UTF-8")
             x = int(mensagem)
-            tcp.send(str.encode('write-Y:'))
+            tcp.send(str.encode('write-Coluna:'))
             mensagem = tcp.recv(1024).decode("UTF-8")
             y = int(mensagem)
             if x <= 0 or x > 10 or y <= 0 or y > 10:
@@ -88,21 +87,24 @@ class Jogador:
             for posicoes in navio:
                 if not self.mapa.mapa[int(posicoes[0])][int(posicoes[1])].atingido:
                     ganhou = False
-            self.ganhou = ganhou
+            if ganhou:
+                self.ganhou = True
+                break
 
     def final(self):
-        if self.is_host():
+        if self.is_host:
             if self.ganhou:
                 print("Parabéns %s, você venceu"%(self.nome))
             else:
                 print("%s, você perdeu"%(self.nome))
         else:
             if self.ganhou:
-                print("Parabéns" + self.nome + "você venceu\n")
+                tcp.send(str.encode("Parabéns" + self.nome + "você venceu\n"))
             else:
-                print(self.nome + ", você perdeu\n")
+                tcp.send(str.encode(self.nome + ", você perdeu\n"))
+            tcp.send(str.encode("fim"))
             tcp.close()
-
+#
 class Quadrado:
     def __init__(self):
         self.atingido = False
@@ -177,15 +179,14 @@ class Mapa:
                 else:
                     y2 = y1 + 1
                     y3 = y2 + 1
-                    x3 = x2 = y1
-
+                    x3 = x2 = x1
                 if x2 >= 10 or y2 >= 10 or x3 >= 10 or y3 >= 10:
                     navio_adicionado = False
-                    continue;
+                    continue
 
                 if self.mapa[x2][y2].valor == 'X' or self.mapa[x3][y3].valor == 'X':
                     navio_adicionado = False
-                    continue;
+                    continue
                 navio = [[x1,y1],[x2,y2],[x3,y3]]
                 self.navios.append(navio)
                 self.mapa[x1][y1].valor = 'X'
